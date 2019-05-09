@@ -8,12 +8,14 @@
 -- applications of accuracy mods ('Accuracy varies with TP.')
 -- applications of damage mods ('Damage varies with TP.')
 -- performance of the actual WS (rand numbers, etc)
+------------------------------------
 require("scripts/globals/magicburst")
 require("scripts/globals/ability")
 require("scripts/globals/status")
 require("scripts/globals/magic")
 require("scripts/globals/utils")
 require("scripts/globals/msg")
+------------------------------------
 
 -- params contains: ftp100, ftp200, ftp300, str_wsc, dex_wsc, vit_wsc, int_wsc, mnd_wsc, canCrit, crit100, crit200, crit300, acc100, acc200, acc300, ignoresDef, ignore100, ignore200, ignore300, atk100, atk200, atk300, kick
 function doPhysicalWeaponskill(attacker, target, wsID, tp, primary, action, taChar, params)
@@ -351,13 +353,18 @@ end
 function accVariesWithTP(hitrate,acc,tp,a1,a2,a3)
     -- sadly acc varies with tp ALL apply an acc PENALTY, the acc at various %s are given as a1 a2 a3
     accpct = fTP(tp,a1,a2,a3)
-    acclost = acc - (acc*accpct)
-    hrate = hitrate - (0.005*acclost)
-    -- cap it
-    if (hrate>0.95) then
+    acclost = acc - (acc * accpct)
+    hrate = hitrate - (0.005 * acclost)
+    -- Apply hitrate cap
+    local weaponType = attacker:getWeaponSkillType(dsp.slot.MAIN)
+    if weaponType == dsp.skill.HAND_TO_HAND or weaponType == dsp.skill.DAGGER or weaponType == dsp.skill.SWORD or weaponType == dsp.skill.AXE or weaponType == dsp.skill.KATANA or weaponType == dsp.skill.CLUB then
+        if hrate > 0.99 then
+            hrate = 0.99
+        end
+    else hrate > 0.95 then
         hrate = 0.95
     end
-    if (hrate<0.2) then
+    if hrate < 0.2 then
         hrate = 0.2
     end
     return hrate
@@ -406,13 +413,17 @@ function getHitRate(attacker,target,capHitRate,bonus)
     hitrate = hitrate+hitdiff
     hitrate = hitrate/100
 
-
-    -- Applying hitrate caps
-    if (capHitRate) then -- this isn't capped for when acc varies with tp, as more penalties are due
-        if (hitrate>0.95) then
-            hitrate = 0.95
+    -- Apply hitrate cap
+    local weaponType = attacker:getWeaponSkillType(dsp.slot.MAIN)
+    if capHitRate then -- this isn't capped for when acc varies with tp, as more penalties are due
+        if weaponType == dsp.skill.HAND_TO_HAND or weaponType == dsp.skill.DAGGER or weaponType == dsp.skill.SWORD or weaponType == dsp.skill.AXE or weaponType == dsp.skill.KATANA or weaponType == dsp.skill.CLUB then
+            if hrate > 0.99 then
+                hrate = 0.99
+            end
+        else hrate > 0.95 then
+            hrate = 0.95
         end
-        if (hitrate<0.2) then
+        if hitrate < 0.2 then
             hitrate = 0.2
         end
     end
@@ -453,12 +464,12 @@ function getRangedHitRate(attacker,target,capHitRate,bonus)
     hitrate = hitrate+hitdiff
     hitrate = hitrate/100
 
-    -- Applying hitrate caps
-    if (capHitRate) then -- this isn't capped for when acc varies with tp, as more penalties are due
-        if (hitrate>0.95) then
+    -- Apply hitrate cap
+    if capHitRate then -- this isn't capped for when acc varies with tp, as more penalties are due
+        if hitrate > 0.95 then
             hitrate = 0.95
         end
-        if (hitrate<0.2) then
+        if hitrate < 0.2 then
             hitrate = 0.2
         end
     end
